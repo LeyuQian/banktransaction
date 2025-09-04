@@ -28,6 +28,7 @@ public class AccountService {
     public AccountDTO createAccount(Long customerId, String name, AccountType accountType) {
         Customer customer = customerRepository.getReferenceById(customerId);
         Account account = new Account(customer, name, accountType);
+        // TODO:
         account = accountRepository.save(account);
         return new AccountDTO(account, true);
     }
