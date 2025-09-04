@@ -1,6 +1,7 @@
 package com.comp5348.banktransaction.controller;
 
 import com.comp5348.banktransaction.dto.AccountDTO;
+import com.comp5348.banktransaction.model.Account;
 import com.comp5348.banktransaction.model.AccountType;
 import com.comp5348.banktransaction.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,7 @@ public class AccountController {
 
     public static class CreateAccountRequest {
         public String accountName;
+        // Adding account type in create account request
         public String accountType;
     }
 }

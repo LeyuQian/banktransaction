@@ -3,13 +3,14 @@ package com.comp5348.banktransaction.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 /**
  * Entity object for transaction_record database table.
  */
-@Getter
+@Getter @Setter
 @NoArgsConstructor
 @Entity
 public class TransactionRecord {

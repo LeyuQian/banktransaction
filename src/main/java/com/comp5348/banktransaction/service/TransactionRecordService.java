@@ -57,16 +57,23 @@ public class TransactionRecordService {
             fromAccount.modifyBalance(-amount);
             accountRepository.save(fromAccount);
         }
+
         Account toAccount = null;
+        var actualAmount = amount;
+        Double merchantFee = 0.0;
+        //TODO: if bussiness, merchantFee = (amount x %2), actualAmount = account - merchantFee
         if (toAccountId != null) {
             toAccount = accountRepository
                     .findByIdAndCustomer(toAccountId, customerRepository.getReferenceById(toCustomerId))
                     .orElseThrow();
-            toAccount.modifyBalance(amount);
+            toAccount.modifyBalance(actualAmount);
             accountRepository.save(toAccount);
         }
 
-        TransactionRecord transactionRecord = new TransactionRecord(amount, toAccount, fromAccount, memo);
+        TransactionRecord transactionRecord = new TransactionRecord(actualAmount, toAccount, fromAccount, memo);
+        // TODO: check if business, modify merchant fee
+        transactionRecord.setMerchantFee(merchantFee);
+        // TODO: tranfser to revenue account
         transactionRecordRepository.save(transactionRecord);
 
         return new TransactionRecordDTO(transactionRecord);
