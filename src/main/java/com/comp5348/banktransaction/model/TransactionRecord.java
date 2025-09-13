@@ -25,7 +25,7 @@ public class TransactionRecord {
 
     // add merchant fee not null
     @Column(nullable = false)
-    private Double merchantFee;
+    private Double merchantFee = 0.0;
 
     @Column(nullable = false)
     private LocalDateTime time;
@@ -47,7 +47,20 @@ public class TransactionRecord {
         this.toAccount = toAccount;
         this.fromAccount = fromAccount;
         this.memo = memo;
-        // set initial merchant fee to 0
         this.merchantFee = 0.0;
+    }
+
+    @Override
+    public String toString() {
+        return "TransactionRecord{" +
+                "id=" + id +
+                ", amount=" + amount +
+                ", memo='" + memo + '\'' +
+                ", merchantFee=" + merchantFee +
+                ", time=" + time +
+                ", toAccount=" + toAccount +
+                ", fromAccount=" + fromAccount +
+                ", version=" + version +
+                '}';
     }
 }

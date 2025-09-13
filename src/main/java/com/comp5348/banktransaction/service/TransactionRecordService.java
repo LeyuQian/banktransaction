@@ -14,6 +14,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Business logic for creating and managing transactions (transfer / deposit).
@@ -23,6 +25,10 @@ public class TransactionRecordService {
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository;
     private final TransactionRecordRepository transactionRecordRepository;
+    private static final Logger log = LoggerFactory.getLogger(TransactionRecordService.class);
+
+    //TODO: update revenue account id here manually after creation
+    public static final Long REVENUE_ACCOUNT_ID = 5L;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -59,23 +65,45 @@ public class TransactionRecordService {
         }
 
         Account toAccount = null;
+        // if the toAccount is BUSINESS Account, require merchant fee
+        // set two variables to track merchant fee and the actual amount transfer to toAccount
         var actualAmount = amount;
         Double merchantFee = 0.0;
-        //TODO: if bussiness, merchantFee = (amount x %2), actualAmount = account - merchantFee
+        double merchantFeePercentage = 0.02;
+
         if (toAccountId != null) {
             toAccount = accountRepository
                     .findByIdAndCustomer(toAccountId, customerRepository.getReferenceById(toCustomerId))
                     .orElseThrow();
+            // if toAccount type is BUSINESS, update actual transfer amount and merchant fee
+            if (toAccount.getAccountType().name().equals("BUSINESS")) {
+                merchantFee = amount * merchantFeePercentage;
+                actualAmount = amount - merchantFee;
+            }
+            log.info("Performing {}, toAccount type is {}, actual transfer amount: {}, merchant fee: {}",
+                    memo, toAccount.getAccountType().name(), actualAmount, merchantFee);
+
+            //update toAccount balance with actual amount
             toAccount.modifyBalance(actualAmount);
             accountRepository.save(toAccount);
         }
 
         TransactionRecord transactionRecord = new TransactionRecord(actualAmount, toAccount, fromAccount, memo);
-        // TODO: check if business, modify merchant fee
+        // default merchant fee is 0, so if is BUSINESS account, will set record with updated merchant fee
+        // otherwise merchant fee will still be set to 0
         transactionRecord.setMerchantFee(merchantFee);
-        // TODO: tranfser to revenue account
+        log.info("Create and save new transaction record in database, transaction: {}", transactionRecord.toString());
         transactionRecordRepository.save(transactionRecord);
+
+        // transfer to revenue account if BUSINESS account
+        if (toAccount != null && toAccount.getAccountType().name().equals("BUSINESS")) {
+            Account revenueAccount = accountRepository.findById(REVENUE_ACCOUNT_ID).orElseThrow();
+            revenueAccount.modifyBalance(merchantFee);
+            log.info("Transfer merchant fee to revenue account, merchant fee: {}", merchantFee);
+            accountRepository.save(revenueAccount);
+        }
 
         return new TransactionRecordDTO(transactionRecord);
     }
+
 }
